@@ -14,6 +14,7 @@
     .modal.active { display: block; }
     .modal h2 { margin-top: 0; }
     .modal input { width: 100%; padding: 10px; margin-top: 10px; font-size: 14px; }
+    .modal button { padding: 10px; font-size: 16px; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -22,54 +23,102 @@
   <button onclick="openModal('register')">تسجيل</button>
   <button onclick="openModal('login')">دخول</button>
   <button onclick="openModal('sendVerification')">ارسال رمز التاكيد</button>
+  <button onclick="openModal('resetPassword')">إعادة تعيين كلمة المرور</button>
 </div>
 
-<!-- Pop-up Modal for Verification Code -->
-<div id="verificationModal" class="modal">
-  <h2>ادخل رمز التاكيد</h2>
-  <input type="text" id="verificationCode" placeholder="رمز التاكيد">
-  <button onclick="sendVerificationCode()">ارسال</button>
+<!-- Pop-up Modal -->
+<div id="popupModal" class="modal">
+  <h2 id="modalTitle">ادخل التفاصيل</h2>
+  <div id="modalFields">
+    <!-- Fields will be populated dynamically based on the action -->
+  </div>
+  <button onclick="submitAction()">ارسال</button>
 </div>
 
 <script>
+  let currentAction = '';
+
   function openModal(action) {
-    const modal = document.getElementById('verificationModal');
+    currentAction = action;
+    const modal = document.getElementById('popupModal');
     modal.classList.add('active');
-    modal.dataset.action = action; // Save the action type for later use
+    const modalFields = document.getElementById('modalFields');
+    modalFields.innerHTML = ''; // Clear existing fields
+    let title = '';
+
+    if (action === 'register') {
+      title = 'تسجيل';
+      modalFields.innerHTML += `
+        <input type="text" id="firstName" placeholder="الاسم الأول">
+        <input type="text" id="seconedName" placeholder="الاسم الثاني">
+        <input type="text" id="familyName" placeholder="اسم العائلة">
+        <input type="text" id="phoneNumber" placeholder="رقم الهاتف">
+        <input type="password" id="password" placeholder="كلمة المرور">
+        <input type="text" id="fcmToken" placeholder="رمز FCM">
+      `;
+    } else if (action === 'login') {
+      title = 'دخول';
+      modalFields.innerHTML += `
+        <input type="text" id="userNameOrEmailAddress" placeholder="اسم المستخدم أو البريد الإلكتروني">
+        <input type="password" id="password" placeholder="كلمة المرور">
+        <input type="text" id="twoFactorVerificationCode" placeholder="رمز التحقق الثنائي (إن وجد)">
+      `;
+    } else if (action === 'sendVerification') {
+      title = 'ارسال رمز التاكيد';
+      modalFields.innerHTML += `
+        <input type="text" id="phoneNumber" placeholder="رقم الهاتف">
+        <input type="text" id="fcmToken" placeholder="رمز FCM (اختياري)">
+      `;
+    } else if (action === 'resetPassword') {
+      title = 'إعادة تعيين كلمة المرور';
+      modalFields.innerHTML += `
+        <input type="text" id="phoneNumber" placeholder="رقم الهاتف">
+        <input type="text" id="resetCode" placeholder="رمز التحقق لإعادة التعيين">
+        <input type="password" id="newPassword" placeholder="كلمة المرور الجديدة">
+      `;
+    }
+
+    document.getElementById('modalTitle').innerText = title;
   }
 
   function closeModal() {
-    document.getElementById('verificationModal').classList.remove('active');
+    document.getElementById('popupModal').classList.remove('active');
   }
 
-  async function sendVerificationCode() {
-    const code = document.getElementById('verificationCode').value;
-    const action = document.getElementById('verificationModal').dataset.action;
-    let url, data;
+  async function submitAction() {
+    let url = '';
+    let data = {};
 
-    if (action === 'register') {
+    if (currentAction === 'register') {
       url = '/api/v1/Account/Register';
       data = {
-        firstName: 'Ahmed',
-        seconedName: 'Salam',
-        familyName: 'Al-Khazraji',
-        phoneNumber: '+9647812312323',
-        password: 'yourPassword',
-        fcmToken: 'yourFcmToken'
+        firstName: document.getElementById('firstName').value,
+        seconedName: document.getElementById('seconedName').value,
+        familyName: document.getElementById('familyName').value,
+        phoneNumber: document.getElementById('phoneNumber').value,
+        password: document.getElementById('password').value,
+        fcmToken: document.getElementById('fcmToken').value
       };
-    } else if (action === 'login') {
+    } else if (currentAction === 'login') {
       url = '/api/v1/Account/Login';
       data = {
-        userNameOrEmailAddress: 'Ahmed@gmail.com',
-        password: 'yourPassword',
-        twoFactorVerificationCode: code,
+        userNameOrEmailAddress: document.getElementById('userNameOrEmailAddress').value,
+        password: document.getElementById('password').value,
+        twoFactorVerificationCode: document.getElementById('twoFactorVerificationCode').value,
         rememberClient: true
       };
-    } else if (action === 'sendVerification') {
+    } else if (currentAction === 'sendVerification') {
       url = '/api/v1/Account/SendVerificationSms';
       data = {
-        phoneNumber: '+9647812312323',
-        fcmToken: 'yourFcmToken'
+        phoneNumber: document.getElementById('phoneNumber').value,
+        fcmToken: document.getElementById('fcmToken').value || ''
+      };
+    } else if (currentAction === 'resetPassword') {
+      url = '/api/v1/Account/ResetPassword';
+      data = {
+        phoneNumber: document.getElementById('phoneNumber').value,
+        resetCode: document.getElementById('resetCode').value,
+        password: document.getElementById('newPassword').value
       };
     }
 
