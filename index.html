@@ -5,16 +5,68 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>واجهة تسجيل</title>
   <style>
-    body { font-family: Arial, sans-serif; background-color: #f0f0f0; text-align: center; }
-    .container { margin-top: 50px; }
-    button { margin: 10px; padding: 10px 20px; font-size: 16px; cursor: pointer; }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      margin-top: 50px;
+    }
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
     /* Pop-up modal styles */
-    .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-             width: 300px; padding: 20px; background-color: white; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); }
-    .modal.active { display: block; }
-    .modal h2 { margin-top: 0; }
-    .modal input { width: 100%; padding: 10px; margin-top: 10px; font-size: 14px; }
-    .modal button { padding: 10px; font-size: 16px; cursor: pointer; }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 300px;
+      padding: 20px;
+      background-color: white;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      z-index: 1000;
+    }
+    .modal.active {
+      display: block;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-header h2 {
+      margin: 0;
+    }
+    .modal-header .close {
+      font-size: 20px;
+      cursor: pointer;
+      color: #888;
+    }
+    .modal-header .close:hover {
+      color: #333;
+    }
+    .modal input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    .modal button {
+      padding: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 15px;
+      width: 100%;
+    }
   </style>
 </head>
 <body>
@@ -28,7 +80,10 @@
 
 <!-- Pop-up Modal -->
 <div id="popupModal" class="modal">
-  <h2 id="modalTitle">ادخل التفاصيل</h2>
+  <div class="modal-header">
+    <h2 id="modalTitle">ادخل التفاصيل</h2>
+    <span class="close" onclick="closeModal()">&times;</span>
+  </div>
   <div id="modalFields">
     <!-- Fields will be populated dynamically based on the action -->
   </div>
@@ -54,7 +109,7 @@
         <input type="text" id="familyName" placeholder="اسم العائلة">
         <input type="text" id="phoneNumber" placeholder="رقم الهاتف">
         <input type="password" id="password" placeholder="كلمة المرور">
-        <input type="text" id="fcmToken" placeholder="رمز FCM">
+        <input type="text" id="fcmToken" placeholder="رمز FCM (اختياري)">
       `;
     } else if (action === 'login') {
       title = 'دخول';
@@ -97,14 +152,14 @@
         familyName: document.getElementById('familyName').value,
         phoneNumber: document.getElementById('phoneNumber').value,
         password: document.getElementById('password').value,
-        fcmToken: document.getElementById('fcmToken').value
+        fcmToken: document.getElementById('fcmToken').value || ''
       };
     } else if (currentAction === 'login') {
       url = '/api/v1/Account/Login';
       data = {
         userNameOrEmailAddress: document.getElementById('userNameOrEmailAddress').value,
         password: document.getElementById('password').value,
-        twoFactorVerificationCode: document.getElementById('twoFactorVerificationCode').value,
+        twoFactorVerificationCode: document.getElementById('twoFactorVerificationCode').value || '',
         rememberClient: true
       };
     } else if (currentAction === 'sendVerification') {
@@ -129,11 +184,11 @@
         body: JSON.stringify(data)
       });
 
+      const result = await response.json();
       if (response.ok) {
         alert("تم ارسال الطلب بنجاح!");
       } else {
-        const result = await response.json();
-        alert("خطأ: " + result.error.message);
+        alert("خطأ: " + (result.error ? result.error.message : "حدث خطأ غير معروف"));
       }
     } catch (error) {
       alert("خطأ في الاتصال بالخادم.");
