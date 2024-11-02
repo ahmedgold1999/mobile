@@ -141,11 +141,12 @@
   }
 
   async function submitAction() {
-    let url = '';
+    let url = 'http://mobile.nid-moi.gov.iq';
+    let endpoint = '';
     let data = {};
 
     if (currentAction === 'register') {
-      url = '/api/v1/Account/Register';
+      endpoint = '/api/v1/Account/Register';
       data = {
         firstName: document.getElementById('firstName').value,
         seconedName: document.getElementById('seconedName').value,
@@ -155,7 +156,7 @@
         fcmToken: document.getElementById('fcmToken').value || ''
       };
     } else if (currentAction === 'login') {
-      url = '/api/v1/Account/Login';
+      endpoint = '/api/v1/Account/Login';
       data = {
         userNameOrEmailAddress: document.getElementById('userNameOrEmailAddress').value,
         password: document.getElementById('password').value,
@@ -163,13 +164,13 @@
         rememberClient: true
       };
     } else if (currentAction === 'sendVerification') {
-      url = '/api/v1/Account/SendVerificationSms';
+      endpoint = '/api/v1/Account/SendVerificationSms';
       data = {
         phoneNumber: document.getElementById('phoneNumber').value,
         fcmToken: document.getElementById('fcmToken').value || ''
       };
     } else if (currentAction === 'resetPassword') {
-      url = '/api/v1/Account/ResetPassword';
+      endpoint = '/api/v1/Account/ResetPassword';
       data = {
         phoneNumber: document.getElementById('phoneNumber').value,
         resetCode: document.getElementById('resetCode').value,
@@ -178,7 +179,7 @@
     }
 
     try {
-      const response = await fetch(url, {
+      const response = await fetch(url + endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
