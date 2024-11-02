@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>واجهة تسجيل</title>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f0f0f0; text-align: center; }
+    .container { margin-top: 50px; }
+    button { margin: 10px; padding: 10px 20px; font-size: 16px; cursor: pointer; }
+    /* Pop-up modal styles */
+    .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+             width: 300px; padding: 20px; background-color: white; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); }
+    .modal.active { display: block; }
+    .modal h2 { margin-top: 0; }
+    .modal input { width: 100%; padding: 10px; margin-top: 10px; font-size: 14px; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <button onclick="openModal('register')">تسجيل</button>
+  <button onclick="openModal('login')">دخول</button>
+  <button onclick="openModal('sendVerification')">ارسال رمز التاكيد</button>
+</div>
+
+<!-- Pop-up Modal for Verification Code -->
+<div id="verificationModal" class="modal">
+  <h2>ادخل رمز التاكيد</h2>
+  <input type="text" id="verificationCode" placeholder="رمز التاكيد">
+  <button onclick="sendVerificationCode()">ارسال</button>
+</div>
+
+<script>
+  function openModal(action) {
+    const modal = document.getElementById('verificationModal');
+    modal.classList.add('active');
+    modal.dataset.action = action; // Save the action type for later use
+  }
+
+  function closeModal() {
+    document.getElementById('verificationModal').classList.remove('active');
+  }
+
+  async function sendVerificationCode() {
+    const code = document.getElementById('verificationCode').value;
+    const action = document.getElementById('verificationModal').dataset.action;
+    let url, data;
+
+    if (action === 'register') {
+      url = '/api/v1/Account/Register';
+      data = {
+        firstName: 'Ahmed',
+        seconedName: 'Salam',
+        familyName: 'Al-Khazraji',
+        phoneNumber: '+9647812312323',
+        password: 'yourPassword',
+        fcmToken: 'yourFcmToken'
+      };
+    } else if (action === 'login') {
+      url = '/api/v1/Account/Login';
+      data = {
+        userNameOrEmailAddress: 'Ahmed@gmail.com',
+        password: 'yourPassword',
+        twoFactorVerificationCode: code,
+        rememberClient: true
+      };
+    } else if (action === 'sendVerification') {
+      url = '/api/v1/Account/SendVerificationSms';
+      data = {
+        phoneNumber: '+9647812312323',
+        fcmToken: 'yourFcmToken'
+      };
+    }
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      if (response.ok) {
+        alert("تم ارسال الطلب بنجاح!");
+      } else {
+        const result = await response.json();
+        alert("خطأ: " + result.error.message);
+      }
+    } catch (error) {
+      alert("خطأ في الاتصال بالخادم.");
+    } finally {
+      closeModal();
+    }
+  }
+</script>
+</body>
+</html>
