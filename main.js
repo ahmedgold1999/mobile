@@ -1,212 +1,84 @@
-// Select Elements
-let countSpan = document.querySelector(".count span");
-let bullets = document.querySelector(".bullets");
-let bulletsSpanContainer = document.querySelector(".bullets .spans");
-let quizArea = document.querySelector(".quiz-area");
-let answersArea = document.querySelector(".answers-area");
-let submitButton = document.querySelector(".submit-button");
-let resultsContainer = document.querySelector(".results");
-let countdownElement = document.querySelector(".countdown");
-
-// Set Options
-let currentIndex = 0;
-let rightAnswers = 0;
-let countdownInterval;
-
-function getQuestions() {
-  let myRequest = new XMLHttpRequest();
-
-  myRequest.onreadystatechange = function () {
-    if (this.readyState === 4 && this.status === 200) {
-      let questionsObject = JSON.parse(this.responseText);
-      let qCount = questionsObject.length;
-
-      // Create Bullets + Set Questions Count
-      createBullets(qCount);
-
-      // Add Question Data
-      addQuestionData(questionsObject[currentIndex], qCount);
-
-      // Start CountDown
-      countdown(3, qCount);
-
-      // Click On Submit
-      submitButton.onclick = () => {
-        // Get Right Answer
-        let theRightAnswer = questionsObject[currentIndex].right_answer;
-
-        // Increase Index
-        currentIndex++;
-
-        // Check The Answer
-        checkAnswer(theRightAnswer, qCount);
-
-        // Remove Previous Question
-        quizArea.innerHTML = "";
-        answersArea.innerHTML = "";
-
-        // Add Question Data
-        addQuestionData(questionsObject[currentIndex], qCount);
-
-        // Handle Bullets Class
-        handleBullets();
-
-        // Start CountDown
-        clearInterval(countdownInterval);
-        countdown(3, qCount);
-
-        // Show Results
-        showResults(qCount);
-      };
+const quizData = [
+    {
+        question: "ما هي لغة البرمجة المستخدمة لبناء تطبيقات الويب في المتصفح؟",
+        a: "Python",
+        b: "C++",
+        c: "JavaScript",
+        d: "Java",
+        correct: "c"
+    },
+    {
+        question: "ما هو اختصار HTML؟",
+        a: "Hyper Trainer Markup Language",
+        b: "Hyper Text Markup Language",
+        c: "Hyper Text Marketing Language",
+        d: "Hyper Text Markup Leveler",
+        correct: "b"
+    },
+    {
+        question: "ما هو CSS؟",
+        a: "لغة برمجة",
+        b: "نظام إدارة قواعد بيانات",
+        c: "لغة تنسيق صفحات الويب",
+        d: "نوع من أنواع الشبكات",
+        correct: "c"
     }
-  };
+];
 
-  myRequest.open("GET", "html_questions.json", true);
-  myRequest.send();
+let currentQuestionIndex = 0;
+let score = 0;
+
+const quizContainer = document.getElementById('quiz');
+const nextButton = document.getElementById('next-button');
+const submitButton = document.getElementById('submit-button');
+const resultContainer = document.getElementById('result');
+
+// عرض السؤال الأول
+loadQuestion();
+
+function loadQuestion() {
+    const currentQuestion = quizData[currentQuestionIndex];
+    quizContainer.innerHTML = `
+        <h2>${currentQuestion.question}</h2>
+        <label><input type="radio" name="answer" value="a"> ${currentQuestion.a}</label><br>
+        <label><input type="radio" name="answer" value="b"> ${currentQuestion.b}</label><br>
+        <label><input type="radio" name="answer" value="c"> ${currentQuestion.c}</label><br>
+        <label><input type="radio" name="answer" value="d"> ${currentQuestion.d}</label><br>
+    `;
 }
 
-getQuestions();
-
-function createBullets(num) {
-  countSpan.innerHTML = num;
-
-  // Create Spans
-  for (let i = 0; i < num; i++) {
-    // Create Bullet
-    let theBullet = document.createElement("span");
-
-    // Check If Its First Span
-    if (i === 0) {
-      theBullet.className = "on";
-    }
-
-    // Append Bullets To Main Bullet Container
-    bulletsSpanContainer.appendChild(theBullet);
-  }
+function getSelectedAnswer() {
+    const options = document.getElementsByName('answer');
+    let selected = '';
+    options.forEach(option => {
+        if (option.checked) {
+            selected = option.value;
+        }
+    });
+    return selected;
 }
 
-function addQuestionData(obj, count) {
-  if (currentIndex < count) {
-    // Create H2 Question Title
-    let questionTitle = document.createElement("h2");
-
-    // Create Question Text
-    let questionText = document.createTextNode(obj["title"]);
-
-    // Append Text To H2
-    questionTitle.appendChild(questionText);
-
-    // Append The H2 To The Quiz Area
-    quizArea.appendChild(questionTitle);
-
-    // Create The Answers
-    for (let i = 1; i <= 4; i++) {
-      // Create Main Answer Div
-      let mainDiv = document.createElement("div");
-
-      // Add Class To Main Div
-      mainDiv.className = "answer";
-
-      // Create Radio Input
-      let radioInput = document.createElement("input");
-
-      // Add Type + Name + Id + Data-Attribute
-      radioInput.name = "question";
-      radioInput.type = "radio";
-      radioInput.id = `answer_${i}`;
-      radioInput.dataset.answer = obj[`answer_${i}`];
-
-      // Make First Option Selected
-      if (i === 1) {
-        radioInput.checked = true;
-      }
-
-      // Create Label
-      let theLabel = document.createElement("label");
-
-      // Add For Attribute
-      theLabel.htmlFor = `answer_${i}`;
-
-      // Create Label Text
-      let theLabelText = document.createTextNode(obj[`answer_${i}`]);
-
-      // Add The Text To Label
-      theLabel.appendChild(theLabelText);
-
-      // Add Input + Label To Main Div
-      mainDiv.appendChild(radioInput);
-      mainDiv.appendChild(theLabel);
-
-      // Append All Divs To Answers Area
-      answersArea.appendChild(mainDiv);
-    }
-  }
+function showResult() {
+    resultContainer.innerHTML = `<h2>نتيجتك: ${score} من ${quizData.length}</h2>`;
+    resultContainer.classList.remove('hidden');
 }
 
-function checkAnswer(rAnswer, count) {
-  let answers = document.getElementsByName("question");
-  let theChoosenAnswer;
-
-  for (let i = 0; i < answers.length; i++) {
-    if (answers[i].checked) {
-      theChoosenAnswer = answers[i].dataset.answer;
+// الانتقال إلى السؤال التالي
+nextButton.addEventListener('click', () => {
+    const selectedAnswer = getSelectedAnswer();
+    if (selectedAnswer === quizData[currentQuestionIndex].correct) {
+        score++;
     }
-  }
 
-  if (rAnswer === theChoosenAnswer) {
-    rightAnswers++;
-  }
-}
-
-function handleBullets() {
-  let bulletsSpans = document.querySelectorAll(".bullets .spans span");
-  let arrayOfSpans = Array.from(bulletsSpans);
-  arrayOfSpans.forEach((span, index) => {
-    if (currentIndex === index) {
-      span.className = "on";
-    }
-  });
-}
-
-function showResults(count) {
-  let theResults;
-  if (currentIndex === count) {
-    quizArea.remove();
-    answersArea.remove();
-    submitButton.remove();
-    bullets.remove();
-
-    if (rightAnswers > count / 2 && rightAnswers < count) {
-      theResults = `<span class="good">Good</span>, ${rightAnswers} From ${count}`;
-    } else if (rightAnswers === count) {
-      theResults = `<span class="perfect">Perfect</span>, All Answers Is Good`;
+    currentQuestionIndex++;
+    if (currentQuestionIndex < quizData.length) {
+        loadQuestion();
     } else {
-      theResults = `<span class="bad">Bad</span>, ${rightAnswers} From ${count}`;
+        quizContainer.classList.add('hidden');
+        nextButton.classList.add('hidden');
+        submitButton.classList.remove('hidden');
     }
+});
 
-    resultsContainer.innerHTML = theResults;
-    resultsContainer.style.padding = "10px";
-    resultsContainer.style.backgroundColor = "white";
-    resultsContainer.style.marginTop = "10px";
-  }
-}
-
-function countdown(duration, count) {
-  if (currentIndex < count) {
-    let minutes, seconds;
-    countdownInterval = setInterval(function () {
-      minutes = parseInt(duration / 60);
-      seconds = parseInt(duration % 60);
-
-      minutes = minutes < 10 ? `0${minutes}` : minutes;
-      seconds = seconds < 10 ? `0${seconds}` : seconds;
-
-      countdownElement.innerHTML = `${minutes}:${seconds}`;
-
-      if (--duration < 0) {
-        clearInterval(countdownInterval);
-        submitButton.click();
-      }
-    }, 1000);
-  }
-}
+// عرض النتيجة النهائية
+submitButton.addEventListener('click', showResult);
